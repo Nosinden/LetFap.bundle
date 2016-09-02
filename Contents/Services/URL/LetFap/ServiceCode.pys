@@ -2,17 +2,10 @@
 
 """LetFap Service Code"""
 
-from subprefs import GetPrefs
-
 ####################################################################################################
 def MetadataObjectForURL(url):
-    """
-    This function should create and return a metadata object (for example, a VideoClipOb-
-    ject) and populate it with metadata from the given URL. Only the metadata should be
-    added here - the object's key and rating_key properties will be synthesised based on the URL.
-    """
 
-    html = HTML.ElementFromURL(url)
+    html = HTML.ElementFromURL(url, cacheTime=10)
 
     time_stamp = int(Datetime.TimestampFromDatetime(Datetime.Now()))
     thumb = html.xpath('//meta[@property="og:image"]/@content')[0]
@@ -34,7 +27,7 @@ def MetadataObjectForURL(url):
         genres = md.xpath('//ul[@class="links links-categories"]/li/a/text()')
         tags = md.xpath('//ul[@class="links links-tags"]/li/a/text()')
 
-    vco = VideoClipObject(
+    return VideoClipObject(
         title=title,
         source_title='LetFap',
         tagline=tagline,
@@ -48,26 +41,22 @@ def MetadataObjectForURL(url):
         thumb=thumb,
         art=art)
 
-    return vco
-
 ####################################################################################################
 def MediaObjectsForURL(url):
-    """
-    This function should create and return a list of media objects and part objects representing
-    the media available at the given URL. Callbacks may be used if obtaining the final media
-    location requires additional computation.
-    """
 
-    mo = []
-    fmt_list = ['720', '360']
-    prefs = get_prefs()
+    mo = list()
+    fmt_list = list()
+    html = HTML.ElementFromURL(url, cacheTime=10)
+    for s in html.xpath('//video/source'):
+        if (s.get('type') == "video/mp4"):
+            fmt_list.append(s.get('data-res'))
 
-    if prefs['force_tc'] == 'true':
+    if Prefs['force_tc']:
         Log.Debug('* Force Transcoding ON')
         for f in fmt_list:
             mo.append(MediaObject(
                 parts=[PartObject(key=Callback(PlayVideo, url=url, fmt=f))],
-                video_resolution=f,
+                video_resolution=f[:-1],
                 audio_channels=2,
                 optimized_for_streaming=False
                 ))
@@ -76,7 +65,7 @@ def MediaObjectsForURL(url):
         for f in fmt_list:
             mo.append(MediaObject(
                 parts=[PartObject(key=Callback(PlayVideo, url=url, fmt=f))],
-                video_resolution=f,
+                video_resolution=f[:-1],
                 container=Container.MP4,
                 video_codec=VideoCodec.H264,
                 audio_codec=AudioCodec.AAC,
@@ -91,44 +80,11 @@ def MediaObjectsForURL(url):
 def PlayVideo(url, fmt, **kwargs):
     """Format the video url depending of version"""
 
-    html = HTML.ElementFromURL(url)
-
-    Log.Debug('*' * 80)
-    prefs = get_prefs()
-    fmt_dict = {'37': '1080', '22': '720', '18': '360'}
-    urls = []
+    html = HTML.ElementFromURL(url, cacheTime=10)
     if html.xpath('//video'):
-        for s in html.xpath('//video/source/@src'):
-            mp4 = Regex('mime\=(video/mp4)').search(s)
-            if mp4:
-                itag = Regex('itag\=(\d+)').search(s).group(1)
-                urls.append((fmt_dict[itag], s))
+        for s in html.xpath('//video/source'):
+            if (s.get('type') == "video/mp4") and (s.get('data-res') == fmt):
+                Log.Debug(u"* PlayVideo URL = {}".format(s.get('src')))
+                return IndirectResponse(VideoClipObject, key=s.get('src'))
 
-    if not urls:
-        raise Ex.MediaNotAvailable
-
-    for h, u in sorted(urls):
-        vurl = u
-        if fmt == h:
-            break
-
-    Log.Debug('* PlayVideo URL = %s' %vurl)
-    Log.Debug('*' * 80)
-
-    if vurl:
-        return IndirectResponse(VideoClipObject, key=vurl)
-    else:
-        raise Ex.MediaNotAvailable
-
-####################################################################################################
-def get_prefs():
-    """
-    Get Prefs
-    If a new key has not been added yet, do so here
-    """
-
-    prefs = GetPrefs()
-    if not 'force_tc' in prefs.keys():
-        prefs.update({'force_tc': 'false'})
-
-    return prefs
+    raise Ex.MediaNotAvailable

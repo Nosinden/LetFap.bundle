@@ -1,6 +1,12 @@
 ChangeLog
 =========
 
+##### 1.0.3
+- _09/02/2016_
+  - Fix - video resolutions
+  - Update - moved DefaultPrefs to ServicePrefs
+  - Update - `DumbTools` - added _Xbox One_ & _Apple TV v4_
+
 ##### 1.0.2
 - _05/27/2016_
   - Update - Adult star list, now includes video count

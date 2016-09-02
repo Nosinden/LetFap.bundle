@@ -8,7 +8,7 @@ import bookmarks
 from updater import Updater
 from DumbTools import DumbKeyboard, DumbPrefs
 
-TITLE = L('title')
+TITLE = 'LetFap'
 PREFIX = '/video/letfap'
 BASE_URL = 'http://letfap.com'
 
