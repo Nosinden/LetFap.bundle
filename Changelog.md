@@ -1,6 +1,10 @@
 ChangeLog
 =========
 
+##### 1.0.4
+- _11/03/2016_
+  - Added check for offline videos
+
 ##### 1.0.3
 - _09/02/2016_
   - Fix - video resolutions

@@ -7,7 +7,7 @@ This plugin creates a new Video Channel within [Plex Media Server](https://plex.
 
 ## Features
 
-- Watch Free HD XArt Videos
+- Watch Free HD x-art.com Videos
 - Video quality 360p to 1080p
 - Custom Bookmarks
 - Video Search
